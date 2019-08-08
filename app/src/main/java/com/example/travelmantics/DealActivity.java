@@ -20,8 +20,10 @@ import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.storage.FileDownloadTask;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 import com.squareup.picasso.Picasso;
@@ -114,17 +116,28 @@ public class DealActivity extends AppCompatActivity {
         if (requestCode == PICTURE_RESULT && resultCode == RESULT_OK) {
             Uri imageUri = data.getData();
             final StorageReference ref = FirebaseUtil.mStorageRef.child(imageUri.getLastPathSegment());
+
             ref.putFile(imageUri).addOnSuccessListener(this, new OnSuccessListener<UploadTask.TaskSnapshot>() {
                 @Override
                 public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                    String url = ref.getDownloadUrl().toString();
+                    Task<Uri> url = taskSnapshot.getStorage().getDownloadUrl();
+                    while (!url.isSuccessful());
+                    Uri download = url.getResult();
+                    String urlString = download.toString();
+                    String pictureName = taskSnapshot.getStorage().getPath();
+                    deal.setImageUrl(urlString);
+                    deal.setImageName(pictureName);
+                    Log.d("url", urlString);
+                    Log.d("Name", pictureName);
+                    showImage(urlString);
+                    /* String url = ref.getDownloadUrl().toString();
                     //String url = taskSnapshot.getDownloadUrl().toString();
                     String pictureName = taskSnapshot.getStorage().getPath();
                     deal.setImageUrl(url);
                     deal.setImageName(pictureName);
                     Log.d("Url: ", url);
                     Log.d("Name", pictureName);
-                    showImage(url);
+                    showImage(url); */
                 }
             });
         }
